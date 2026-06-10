@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="no">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nyhetsoppsummering – innstillinger</title>
+    <style>
+      body {
+        font:
+          15px/1.5 system-ui,
+          -apple-system,
+          Segoe UI,
+          sans-serif;
+        max-width: 460px;
+        margin: 2.5rem auto;
+        padding: 0 1.25rem;
+        color: #1f2937;
+      }
+      h1 {
+        font-size: 1.25rem;
+      }
+      label {
+        display: block;
+        margin: 1.1rem 0 0.3rem;
+        font-weight: 600;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 0.55rem;
+        box-sizing: border-box;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font: inherit;
+      }
+      .hint {
+        margin-top: 0.3rem;
+        color: #6b7280;
+        font-size: 0.85rem;
+      }
+      button {
+        margin-top: 1.75rem;
+        padding: 0.6rem 1.2rem;
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font: inherit;
+        cursor: pointer;
+      }
+      .status {
+        margin-top: 1rem;
+        min-height: 1.2rem;
+        color: #047857;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Nyhetsoppsummering</h1>
+    <p class="hint">Pek på en artikkellenke, høyreklikk «Oppsummer artikkel» eller trykk Alt+S.</p>
+
+    <label for="provider">Leverandør</label>
+    <select id="provider">
+      <option value="anthropic">Anthropic</option>
+    </select>
+
+    <label for="model">Modell</label>
+    <input id="model" type="text" autocomplete="off" spellcheck="false" />
+
+    <label for="apiKey">API-nøkkel</label>
+    <input id="apiKey" type="password" autocomplete="off" placeholder="sk-ant-..." />
+    <p class="hint">Lagres kun lokalt i nettleseren.</p>
+
+    <button id="save">Lagre</button>
+    <p class="status" id="status"></p>
+
+    <script type="module" src="./options.ts"></script>
+  </body>
+</html>
