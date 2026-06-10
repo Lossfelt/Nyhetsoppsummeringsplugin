@@ -9,10 +9,13 @@ const COMMAND_ID = 'summarize-hovered-link';
 const TIMEOUT_MS = 20000;
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
-    id: CONTEXT_MENU_ID,
-    title: 'Oppsummer artikkel',
-    contexts: ['link'],
+  // removeAll først, ellers kaster create() på duplikat-id ved oppdatering/reload.
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: CONTEXT_MENU_ID,
+      title: 'Oppsummer artikkel',
+      contexts: ['link'],
+    });
   });
 });
 
