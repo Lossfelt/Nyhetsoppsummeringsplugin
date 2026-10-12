@@ -6,8 +6,7 @@ const OFFSCREEN_PATH = 'src/offscreen/offscreen.html';
 const TAB_LOAD_TIMEOUT_MS = 12000;
 
 export type ExtractResult =
-  | { ok: true; text: string; title: string }
-  | { ok: false; reason: 'fetch-failed' | 'not-article' };
+  { ok: true; text: string; title: string } | { ok: false; reason: 'fetch-failed' | 'not-article' };
 
 let creating: Promise<void> | null = null;
 
