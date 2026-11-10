@@ -48,6 +48,20 @@
         font: inherit;
         cursor: pointer;
       }
+      .model-row {
+        display: flex;
+        gap: 0.5rem;
+      }
+      button.secondary {
+        margin-top: 0;
+        background: #e5e7eb;
+        color: #1f2937;
+        flex: none;
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
       .status {
         margin-top: 1rem;
         min-height: 1.2rem;
@@ -62,14 +76,21 @@
     <label for="provider">Leverandør</label>
     <select id="provider">
       <option value="anthropic">Anthropic</option>
+      <option value="openai">OpenAI</option>
     </select>
 
-    <label for="model">Modell</label>
-    <input id="model" type="text" autocomplete="off" spellcheck="false" />
-
     <label for="apiKey">API-nøkkel</label>
-    <input id="apiKey" type="password" autocomplete="off" placeholder="sk-ant-..." />
-    <p class="hint">Lagres kun lokalt i nettleseren.</p>
+    <input id="apiKey" type="password" autocomplete="off" />
+    <p class="hint">Lagres kun lokalt i nettleseren, én nøkkel per leverandør.</p>
+
+    <label for="model">Modell</label>
+    <div class="model-row">
+      <select id="model"></select>
+      <button id="refresh" type="button" class="secondary" title="Hent modellisten på nytt">
+        Oppdater
+      </button>
+    </div>
+    <p class="hint" id="modelStatus"></p>
 
     <button id="save">Lagre</button>
     <p class="status" id="status"></p>

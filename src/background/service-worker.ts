@@ -63,7 +63,8 @@ async function doSummarize(url: string): Promise<SummarizeResult> {
   if (cached) return { kind: 'ok', sentence: cached };
 
   const settings = await loadSettings();
-  if (!settings.apiKey) return { kind: 'no-key' };
+  const apiKey = settings.apiKeys[settings.provider];
+  if (!apiKey) return { kind: 'no-key' };
 
   const extracted = await extractArticle(url);
   if (!extracted.ok) return { kind: extracted.reason };
@@ -71,8 +72,8 @@ async function doSummarize(url: string): Promise<SummarizeResult> {
   try {
     const provider = getProvider(settings.provider);
     const sentence = await provider.summarize(extracted.text, {
-      apiKey: settings.apiKey,
-      model: settings.model,
+      apiKey,
+      model: settings.models[settings.provider],
     });
     if (!sentence) return { kind: 'summary-failed' };
     await setCached(url, sentence);

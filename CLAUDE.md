@@ -22,14 +22,14 @@ Se [PLAN.md](PLAN.md) for full plan og byggerekkefølge. Komponenter:
 - **Content script** — sporer lenke under musepeker (mål for hurtigtast), viser tooltip i **Shadow DOM** (lasting/resultat/feil) nær lenken.
 - **Offscreen-dokument** — DOM-parsing med Mozilla Readability.js for tilnærming A.
 - **Options-side** — provider, modell, API-nøkkel; lagres i `chrome.storage.local`.
-- **LLM-provider-lag** — felles `summarize(tekst)`-grensesnitt. `AnthropicProvider` nå; `OpenRouterProvider` senere (OpenRouter er OpenAI-kompatibelt). Kallsteder skal ikke kjenne konkret leverandør.
+- **LLM-provider-lag** — felles grensesnitt med `summarize(tekst)` og `listModels(nøkkel)`. `anthropicProvider` (SDK) og `openAiProvider` (rå fetch mot Responses API). Kallsteder skal ikke kjenne konkret leverandør.
 
 ## Fastsatte valg (bindende for implementasjonen)
 
 - **Trigger:** høyreklikk på lenke **og** hurtigtast `Alt+S`. Hurtigtasten oppsummerer lenken under musepekeren; ingen lenke = ingen reaksjon (ingen melding).
-- **LLM:** Anthropic **Haiku** bak provider-abstraksjonen. Hele artikkelteksten sendes (ingen trunkering nå).
+- **LLM:** Anthropic eller OpenAI, valgt i options. Standard `claude-haiku-5-5` / `gpt-6-luna`. Modellisten hentes live fra leverandørens `/v1/models` når options åpnes, mellomlagres i `chrome.storage.local`, og faller tilbake til en innebygd liste. Hele artikkelteksten sendes (ingen trunkering nå).
 - **Oppsummering:** én setning på **artikkelens språk** som forklarer poenget. Ikke en artikkel → fast streng «fant ingen artikkel» (UI-nivå, ikke modelloversatt).
-- **API-nøkkel:** limes inn i options, lagres i `chrome.storage.local`. Aldri bak inn nøkler i koden.
+- **API-nøkkel:** limes inn i options, lagres per leverandør i `chrome.storage.local`. Aldri bak inn nøkler i koden.
 - **Ekstraksjon:** offscreen + Readability (A) som standard, automatisk fallback til inaktiv bakgrunnsfane (B) når A gir for lite tekst. B arver session-cookies og løser paywall/innlogging. Ingen domeneliste i v1.
 - **Popup:** minimal tooltip i Shadow DOM, spinner → setning, lukkes ved klikk utenfor / Esc. Ingen ekstra handlinger i v1.
 - **Feil:** fire tilstander (manglende nøkkel → klikkbar, åpner options; klarte ikke hente; fant ingen artikkel; oppsummering feilet). Ingen auto-retry. ~20 s total timeout.

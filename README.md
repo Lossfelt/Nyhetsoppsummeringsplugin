@@ -21,13 +21,13 @@ npm run lint        # eslint + prettier --check
 1. Kjør `npm run build` (eller `npm run dev`).
 2. Åpne `vivaldi://extensions`, slå på «Developer mode».
 3. «Load unpacked» og pek på `dist/`-mappa.
-4. Åpne utvidelsens innstillinger og lim inn en Anthropic API-nøkkel.
+4. Åpne utvidelsens innstillinger, velg leverandør (Anthropic eller OpenAI), lim inn API-nøkkel og velg modell. Modellisten hentes fra leverandøren hver gang innstillingssiden åpnes.
 
 Hurtigtasten `Alt+S` kan endres under `vivaldi://extensions/shortcuts`.
 
 ## Oppsett
 
 - **Stack:** TypeScript + Vite + `@crxjs/vite-plugin`.
-- **LLM:** Anthropic (Haiku) bak et pluggbart provider-lag (`src/providers/`).
+- **LLM:** Anthropic eller OpenAI bak et pluggbart provider-lag (`src/providers/`). Standardmodeller: `claude-haiku-5-5` og `gpt-6-luna`. Nøkkel og modell lagres per leverandør.
 - **Ekstraksjon:** offscreen-dokument med Readability (A), fallback til inaktiv bakgrunnsfane (B) for JS-tunge sider og paywall du har tilgang til.
 - **API-nøkkel:** lagres lokalt i `chrome.storage.local`, aldri i koden.
