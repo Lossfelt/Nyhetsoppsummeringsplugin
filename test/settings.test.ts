@@ -26,9 +26,15 @@ describe('normalizeSettings', () => {
     });
     expect(result).toEqual({
       provider: 'openai',
+      effort: 'default',
       models: { anthropic: 'a', openai: 'o' },
       apiKeys: { anthropic: 'ka', openai: 'ko' },
     });
+  });
+
+  it('leser lavt tenkenivå og ignorerer ukjente verdier', () => {
+    expect(normalizeSettings({ effort: 'low' }).effort).toBe('low');
+    expect(normalizeSettings({ effort: 'max' }).effort).toBe('default');
   });
 
   it('faller tilbake til standardleverandør ved ukjent verdi', () => {

@@ -1,5 +1,6 @@
 import { SUMMARY_SYSTEM_PROMPT, prepareArticleText } from '../lib/prompt';
 import { filterOpenAiModels, type OpenAiModelEntry } from '../lib/models';
+import { ProviderError, kindFromStatus } from './errors';
 import type { LlmProvider } from './types';
 
 // Rå fetch mot REST-API-et i stedet for openai-pakken: to enkle kall gjør
@@ -8,8 +9,8 @@ import type { LlmProvider } from './types';
 const BASE_URL = 'https://api.openai.com/v1';
 
 // Gjeldende OpenAI-modeller er resonneringsmodeller, og resonneringen teller
-// mot grensen. Vi setter ikke reasoning.effort, fordi eldre modeller som
-// gpt-4.1 avviser parameteren.
+// mot grensen. reasoning.effort sendes bare når brukeren har valgt det,
+// fordi eldre modeller som gpt-4.1 avviser parameteren.
 const MAX_OUTPUT_TOKENS = 4000;
 
 interface ResponsesOutputItem {
@@ -34,7 +35,10 @@ async function request<T>(path: string, apiKey: string, init: RequestInit = {}):
   });
   const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
   if (!res.ok) {
-    throw new Error(body?.error?.message ?? `OpenAI svarte med HTTP ${res.status}.`);
+    throw new ProviderError(
+      kindFromStatus(res.status),
+      body?.error?.message ?? `OpenAI svarte med HTTP ${res.status}.`,
+    );
   }
   return body as T;
 }
@@ -54,7 +58,7 @@ export const openAiProvider: LlmProvider = {
   label: 'OpenAI',
   keyPlaceholder: 'sk-...',
 
-  async summarize(articleText, { apiKey, model }) {
+  async summarize(articleText, { apiKey, model, effort }) {
     const body = await request<ResponsesBody>('/responses', apiKey, {
       method: 'POST',
       body: JSON.stringify({
@@ -63,6 +67,7 @@ export const openAiProvider: LlmProvider = {
         input: prepareArticleText(articleText),
         max_output_tokens: MAX_OUTPUT_TOKENS,
         store: false,
+        ...(effort ? { reasoning: { effort } } : {}),
       }),
     });
 

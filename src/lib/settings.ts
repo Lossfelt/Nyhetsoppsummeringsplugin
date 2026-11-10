@@ -2,10 +2,15 @@ export type ProviderId = 'anthropic' | 'openai';
 
 export const PROVIDER_IDS: readonly ProviderId[] = ['anthropic', 'openai'];
 
+// 'low' ber modellen tenke mindre: raskere og billigere, men noen eldre
+// modeller avviser parameteren. 'default' sender ingenting.
+export type Effort = 'default' | 'low';
+
 // Nøkkel og modell lagres per leverandør, slik at man kan bytte frem og
 // tilbake uten å lime inn nøkkelen på nytt.
 export interface Settings {
   provider: ProviderId;
+  effort: Effort;
   models: Record<ProviderId, string>;
   apiKeys: Record<ProviderId, string>;
 }
@@ -17,6 +22,7 @@ export const DEFAULT_MODELS: Record<ProviderId, string> = {
 
 export const DEFAULT_SETTINGS: Settings = {
   provider: 'anthropic',
+  effort: 'default',
   models: { ...DEFAULT_MODELS },
   apiKeys: { anthropic: '', openai: '' },
 };
@@ -48,6 +54,7 @@ export function normalizeSettings(raw: unknown): Settings {
 
   return {
     provider: isProviderId(stored.provider) ? stored.provider : DEFAULT_SETTINGS.provider,
+    effort: stored.effort === 'low' ? 'low' : 'default',
     models: {
       ...DEFAULT_SETTINGS.models,
       ...(legacyModel ? { anthropic: legacyModel } : {}),

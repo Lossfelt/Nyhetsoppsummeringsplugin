@@ -4,6 +4,8 @@
 export type SummarizeResult =
   | { kind: 'ok'; sentence: string }
   | { kind: 'no-key' }
+  | { kind: 'bad-key' }
+  | { kind: 'rate-limited' }
   | { kind: 'fetch-failed' }
   | { kind: 'not-article' }
   | { kind: 'summary-failed'; reason?: string };

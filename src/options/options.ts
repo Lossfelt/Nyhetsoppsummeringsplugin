@@ -5,14 +5,23 @@ import {
   withSelected,
   type ModelInfo,
 } from '../lib/models';
-import { loadSettings, saveSettings, type ProviderId, type Settings } from '../lib/settings';
+import {
+  loadSettings,
+  saveSettings,
+  type Effort,
+  type ProviderId,
+  type Settings,
+} from '../lib/settings';
 import { getProvider } from '../providers';
+import { ProviderError } from '../providers/errors';
 
 const providerEl = document.getElementById('provider') as HTMLSelectElement;
 const modelEl = document.getElementById('model') as HTMLSelectElement;
 const refreshEl = document.getElementById('refresh') as HTMLButtonElement;
 const modelStatusEl = document.getElementById('modelStatus') as HTMLParagraphElement;
 const apiKeyEl = document.getElementById('apiKey') as HTMLInputElement;
+const keyStatusEl = document.getElementById('keyStatus') as HTMLParagraphElement;
+const effortEl = document.getElementById('effort') as HTMLSelectElement;
 const saveEl = document.getElementById('save') as HTMLButtonElement;
 const statusEl = document.getElementById('status') as HTMLParagraphElement;
 
@@ -33,6 +42,13 @@ function renderModels(models: ModelInfo[], selected: string): void {
   modelEl.value = selected;
 }
 
+// Vellykket henting av modellisten bekrefter at nøkkelen virker.
+function setKeyStatus(state: 'ok' | 'bad' | 'none'): void {
+  keyStatusEl.className = `hint key-status ${state}`;
+  keyStatusEl.textContent =
+    state === 'ok' ? 'Nøkkelen virker.' : state === 'bad' ? 'Nøkkelen ble avvist.' : '';
+}
+
 function formatTime(ms: number): string {
   return new Date(ms).toLocaleString('no-NO', { dateStyle: 'short', timeStyle: 'short' });
 }
@@ -48,6 +64,7 @@ async function refreshModels(provider: ProviderId): Promise<void> {
     : 'Viser standardliste. Legg inn nøkkel for å hente alle modeller.';
 
   const apiKey = apiKeyEl.value.trim();
+  setKeyStatus('none');
   if (!apiKey) return;
 
   refreshEl.disabled = true;
@@ -57,10 +74,12 @@ async function refreshModels(provider: ProviderId): Promise<void> {
     if (models.length === 0) throw new Error('Leverandøren returnerte ingen modeller.');
     await saveCachedModels(provider, models);
     if (provider !== current) return;
+    setKeyStatus('ok');
     renderModels(models, modelEl.value || draft.models[provider]);
     modelStatusEl.textContent = `${models.length} modeller hentet nå.`;
   } catch (error) {
     if (provider !== current) return;
+    if (error instanceof ProviderError && error.kind === 'auth') setKeyStatus('bad');
     const reason = error instanceof Error ? error.message : 'ukjent feil';
     modelStatusEl.textContent = `Kunne ikke hente modellisten: ${reason}`;
   } finally {
@@ -83,6 +102,7 @@ function showProvider(provider: ProviderId): void {
 
 async function init(): Promise<void> {
   draft = await loadSettings();
+  effortEl.value = draft.effort;
   showProvider(draft.provider);
 }
 
@@ -105,6 +125,7 @@ refreshEl.addEventListener('click', () => void refreshModels(current));
 saveEl.addEventListener('click', async () => {
   stashCurrent();
   draft.provider = current;
+  draft.effort = effortEl.value as Effort;
   await saveSettings(draft);
   statusEl.textContent = 'Lagret.';
   setTimeout(() => {

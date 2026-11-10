@@ -1,12 +1,15 @@
 import { extractArticle } from './extract';
-import { getCached, setCached } from '../lib/cache';
+import { getCached, setCached, summaryCacheKey } from '../lib/cache';
 import { loadSettings } from '../lib/settings';
 import { getProvider } from '../providers';
+import { ProviderError } from '../providers/errors';
 import type { CommandMessage, ContentMessage, SummarizeResult } from '../lib/messages';
 
 const CONTEXT_MENU_ID = 'summarize-article';
 const COMMAND_ID = 'summarize-hovered-link';
-const TIMEOUT_MS = 20000;
+// Dekker både henting (fallback via fane kan ta opptil 12 s) og modeller
+// som tenker før de svarer.
+const TIMEOUT_MS = 45000;
 
 chrome.runtime.onInstalled.addListener(() => {
   // removeAll først, ellers kaster create() på duplikat-id ved oppdatering/reload.
@@ -59,11 +62,13 @@ async function summarize(url: string): Promise<SummarizeResult> {
 }
 
 async function doSummarize(url: string): Promise<SummarizeResult> {
-  const cached = await getCached(url);
-  if (cached) return { kind: 'ok', sentence: cached };
-
   const settings = await loadSettings();
   const apiKey = settings.apiKeys[settings.provider];
+  const model = settings.models[settings.provider];
+  const cacheKey = summaryCacheKey(url, settings.provider, model);
+
+  const cached = await getCached(cacheKey);
+  if (cached) return { kind: 'ok', sentence: cached };
   if (!apiKey) return { kind: 'no-key' };
 
   const extracted = await extractArticle(url);
@@ -73,17 +78,26 @@ async function doSummarize(url: string): Promise<SummarizeResult> {
     const provider = getProvider(settings.provider);
     const sentence = await provider.summarize(extracted.text, {
       apiKey,
-      model: settings.models[settings.provider],
+      model,
+      ...(settings.effort === 'low' ? { effort: 'low' as const } : {}),
     });
     if (!sentence) return { kind: 'summary-failed' };
-    await setCached(url, sentence);
+    await setCached(cacheKey, sentence);
     return { kind: 'ok', sentence };
   } catch (error) {
-    return {
-      kind: 'summary-failed',
-      reason: error instanceof Error ? error.message : undefined,
-    };
+    return toFailure(error);
   }
+}
+
+function toFailure(error: unknown): SummarizeResult {
+  if (error instanceof ProviderError && error.kind === 'auth') return { kind: 'bad-key' };
+  if (error instanceof ProviderError && error.kind === 'rate-limit') {
+    return { kind: 'rate-limited' };
+  }
+  return {
+    kind: 'summary-failed',
+    reason: error instanceof Error ? error.message : undefined,
+  };
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {

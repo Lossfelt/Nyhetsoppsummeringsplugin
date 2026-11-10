@@ -3,11 +3,24 @@ import type { ContentMessage, SummarizeResult } from '../lib/messages';
 const HOST_TAG = 'nyhetsoppsummering-tooltip';
 const MAX_WIDTH = 320;
 
-const ERROR_TEXT: Record<Exclude<SummarizeResult['kind'], 'ok' | 'no-key'>, string> = {
+// Tilstander som tilbyr en lenke til innstillingene i stedet for ren tekst.
+const SETTINGS_LINK_TEXT = {
+  'no-key': 'Sett opp API-nøkkel i innstillinger',
+  'bad-key': 'API-nøkkelen ble avvist. Sjekk innstillinger',
+} as const;
+
+type SettingsLinkKind = keyof typeof SETTINGS_LINK_TEXT;
+
+const ERROR_TEXT: Record<Exclude<SummarizeResult['kind'], 'ok' | SettingsLinkKind>, string> = {
   'fetch-failed': 'Klarte ikke hente artikkelen',
   'not-article': 'Fant ingen artikkel',
+  'rate-limited': 'For mange forespørsler. Prøv igjen om litt',
   'summary-failed': 'Oppsummering feilet',
 };
+
+function isSettingsLinkKind(kind: SummarizeResult['kind']): kind is SettingsLinkKind {
+  return kind in SETTINGS_LINK_TEXT;
+}
 
 const STYLE = `
   .box {
@@ -82,10 +95,10 @@ export function showTooltip(x: number, y: number): Tooltip {
         box.textContent = result.sentence;
         return;
       }
-      if (result.kind === 'no-key') {
+      if (isSettingsLinkKind(result.kind)) {
         const button = document.createElement('button');
         button.className = 'link';
-        button.textContent = 'Sett opp API-nøkkel i innstillinger';
+        button.textContent = SETTINGS_LINK_TEXT[result.kind];
         button.addEventListener('click', () => {
           const message: ContentMessage = { type: 'open-options' };
           void chrome.runtime.sendMessage(message);
